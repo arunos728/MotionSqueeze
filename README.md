@@ -5,12 +5,12 @@
 * Python 3.6.8
 * PyTorch 1.0.1
 * TorchVison: 0.2.1
-* Spatio Correlation Sampler (https://github.com/ClementPinard/Pytorch-Correlation-extension.git)
+* Spatial Correlation Sampler (https://github.com/ClementPinard/Pytorch-Correlation-extension.git)
 
 ### Clone this repo
 
 ```
-git clone https://github.com/arunos728/spatio-temporal_displacements.git
+git clone https://github.com/arunos728/MS_online_demo.git
 ```
 
 ### Training
