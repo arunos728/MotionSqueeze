@@ -21,13 +21,15 @@ git clone https://github.com/arunos728/spatio-temporal_displacements.git
 ```
 
 * If you can not access Google Drive, please download the pretrained models from [BaiduYun](https://pan.baidu.com/s/1Hx52akJLR_ISfX406bkIog), and put them in "models" folder.
+-->
 
-2. Command for training ECO Lite model:
+Command for running model:
 
 ```bash
-    ./scripts/run_ECOLite_kinetics.sh local
+    ./scripts/run_TSM_Something_v1.sh local
 ```
 
+<!--
 3. For training C3D network use the following command:
 
 ```bash
