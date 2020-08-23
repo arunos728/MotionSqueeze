@@ -9,7 +9,7 @@ from torch.nn.init import xavier_uniform_, constant_
 
 class TSN(nn.Module):
     def __init__(self, num_class, num_segments, pretrained_parts, modality,
-                 base_model='resnet101', new_length=None,
+                 base_model='resnet101', dataset='something', new_length=None,
                  consensus_type='avg', before_softmax=True,
                  dropout=0.8,fc_lr5=True,
                  crop_num=1, partial_bn=True):
@@ -23,6 +23,7 @@ class TSN(nn.Module):
         self.crop_num = crop_num
         self.consensus_type = consensus_type
         self.base_model_name = base_model
+        self.dataset = dataset
         self.fc_lr5 = fc_lr5        
         if not before_softmax and consensus_type != 'avg':
             raise ValueError("Only avg consensus can be used after Softmax")
@@ -56,7 +57,7 @@ TSN Configurations:
                 self.input_mean = [0.5]
                 self.input_std = [np.mean(self.input_std)]            
             feature_dim = self._prepare_tsn(num_class)   
-        elif (base_model == 'TSM_flow'):
+        elif (base_model == 'MS'):
 #             from resnet_TSM import resnet18
 #             self.base_model = resnet18(True, shift='TSM', num_segments = num_segments, flow_estimation = 1)
             from resnet_TSM import resnet18
@@ -64,10 +65,7 @@ TSN Configurations:
             self.base_model.last_layer_name = 'fc1'
             self.input_size = 224
             self.input_mean = [0.485, 0.456, 0.406]
-            self.input_std = [0.229, 0.224, 0.225]
-            if self.modality == 'Flow':
-                self.input_mean = [0.5]
-                self.input_std = [np.mean(self.input_std)]            
+            self.input_std = [0.229, 0.224, 0.225]          
             feature_dim = self._prepare_tsn(num_class)                           
         else:    
             self._prepare_base_model(base_model)
@@ -106,14 +104,17 @@ TSN Configurations:
         if partial_bn:
             self.partialBN(True)
 
-    def _prepare_tsn(self, num_class):
-        feature_dim = getattr(self.base_model, self.base_model.last_layer_name).in_features
+    def _prepare_tsn(self, num_class):    
+        feature_dim = getattr(self.base_model, self.base_model.last_layer_name).in_channels
+#         feature_dim = getattr(self.base_model, self.base_model.last_layer_name).in_features
         if self.dropout == 0:
-            setattr(self.base_model, self.base_model.last_layer_name, nn.Linear(feature_dim, num_class))
+#             setattr(self.base_model, self.base_model.last_layer_name, nn.Linear(feature_dim, num_class))
+            setattr(self.base_model, self.base_model.last_layer_name, nn.Conv1d(feature_dim, num_class, kernel_size=1, stride=1, padding=0,bias=True))  
             self.new_fc = None
         else:
             setattr(self.base_model, self.base_model.last_layer_name, nn.Dropout(p=self.dropout))
-            self.new_fc = nn.Linear(feature_dim, num_class)
+#             self.new_fc = nn.Linear(feature_dim, num_class)
+            self.new_fc = nn.Conv1d(feature_dim, num_class, kernel_size=1, stride=1, padding=0,bias=True)
 
         std = 0.001
         # pytorch 0.3.1
@@ -160,54 +161,7 @@ TSN Configurations:
             if self.modality == 'Flow':
                 self.input_mean = [128]
             elif self.modality == 'RGBDiff':
-                self.input_mean = self.input_mean * (1 + self.new_length)
-
-        elif base_model == 'ECO':
-            import tf_model_zoo
-            self.base_model = getattr(tf_model_zoo, base_model)(num_segments=self.num_segments, pretrained_parts=self.pretrained_parts)
-            self.base_model.last_layer_name = 'fc_final'
-            self.input_size = 224
-            self.input_mean = [104, 117, 123]
-            self.input_std = [1]
-
-            if self.modality == 'Flow':
-                self.input_mean = [128]
-            elif self.modality == 'RGBDiff':
-                self.input_mean = self.input_mean * (1 + self.new_length)
-
-        elif base_model == 'ECOfull':
-            import tf_model_zoo
-            self.base_model = getattr(tf_model_zoo, base_model)(num_segments=self.num_segments, pretrained_parts=self.pretrained_parts)
-            self.base_model.last_layer_name = 'fc_final'
-            self.input_size = 224
-            self.input_mean = [104, 117, 128]
-            self.input_std = [1]
-
-            if self.modality == 'Flow':
-                self.input_mean = [128]
-            elif self.modality == 'RGBDiff':
-                self.input_mean = self.input_mean * (1 + self.new_length)
-
-        elif base_model == 'bninception':
-            import tf_model_zoo
-            self.base_model = getattr(tf_model_zoo, base_model)()
-            self.base_model.last_layer_name = 'fc'
-            self.input_size = 224
-            self.input_mean = [104, 117, 123]
-            self.input_std = [1]
-
-            if self.modality == 'Flow':
-                self.input_mean = [128]
-            elif self.modality == 'RGBDiff':
-                self.input_mean = self.input_mean * (1 + self.new_length)
-
-#         elif 'inception' in base_model:
-#             import tf_model_zoo
-#             self.base_model = getattr(tf_model_zoo, base_model)()
-#             self.base_model.last_layer_name = 'classif'
-#             self.input_size = 299
-#             self.input_mean = [0.5]
-#             self.input_std = [0.5]        
+                self.input_mean = self.input_mean * (1 + self.new_length)     
             
         else:
             raise ValueError('Unknown base model: {}'.format(base_model))
@@ -236,7 +190,7 @@ TSN Configurations:
     def partialBN(self, enable):
         self._enable_pbn = enable
 
-    def get_optim_policies(self):
+    def get_optim_policies(self, dataset):
         first_conv_weight = []
         first_conv_bias = []
         normal_weight = []
@@ -300,119 +254,12 @@ TSN Configurations:
             {'params': custom_ops, 'lr_mult': 1, 'decay_mult': 1,
              'name': "custom_ops"},
             # for fc
-            {'params': lr5_weight, 'lr_mult': 1, 'decay_mult': 1,
+            {'params': lr5_weight, 'lr_mult':  5 if self.dataset == 'kinetics' else 1, 'decay_mult': 1,
              'name': "lr5_weight"},
-            {'params': lr10_bias, 'lr_mult': 2, 'decay_mult': 0,
+            {'params': lr10_bias, 'lr_mult':  10 if self.dataset == 'kinetics' else 2, 'decay_mult': 0,
              'name': "lr10_bias"},
         ]
         
-        
-#     def get_optim_policies(self):
-#         first_3d_conv_weight = []
-#         first_3d_conv_bias = []
-#         normal_weight = []
-#         normal_bias = []
-#         bn = []
-#         flows=[]
-        
-#         conv_2d_cnt = 0
-#         conv_3d_cnt = 0
-#         bn_cnt = 0
-#         for m in self.modules():
-#             # (conv1d or conv2d) 1st layer's params will be append to list: first_conv_weight & first_conv_bias, total num 1 respectively(1 conv2d)
-#             # (conv1d or conv2d or Linear) from 2nd layers' params will be append to list: normal_weight & normal_bias, total num 69 respectively(68 Conv2d + 1 Linear)           
-#             if isinstance(m, torch.nn.Conv2d):
-#                 ps = list(m.parameters())
-#                 conv_2d_cnt += 1
-#                 normal_weight.append(ps[0])
-#                 if len(ps) == 2:
-#                     normal_bias.append(ps[1])
-
-#             elif isinstance(m, torch.nn.Conv3d):
-#                 ps = list(m.parameters())
-#                 conv_3d_cnt += 1
-                
-#                 if (m.weight.sum() == self.base_model.flow_cmp.weight.sum()).all and m.weight.size() == self.base_model.flow_cmp.weight.size():
-#                     flows.append(ps[0])
-#                 elif (m.weight.sum() == self.base_model.flow_conv.weight.sum()).all and m.weight.size() == self.base_model.flow_conv.weight.size():
-#                     flows.append(ps[0])                
-                
-#                 elif conv_3d_cnt == 1:
-#                     first_3d_conv_weight.append(ps[0])
-#                     if len(ps) == 2:
-#                         first_3d_conv_bias.append(ps[1])
-#                 else:
-#                     normal_weight.append(ps[0])
-#                     if len(ps) == 2:
-#                         normal_bias.append(ps[1])
-
-#             elif isinstance(m, torch.nn.Linear):
-#                 ps = list(m.parameters())
-#                 normal_weight.append(ps[0])
-#                 if len(ps) == 2:
-#                     normal_bias.append(ps[1])
-#             # (BatchNorm1d or BatchNorm2d) params will be append to list: bn, total num 2 (enabled pbn, so only: 1st BN layer's weight + 1st BN layer's bias)
-#             elif isinstance(m, torch.nn.BatchNorm1d):
-#                 bn.extend(list(m.parameters()))
-#             elif isinstance(m, torch.nn.BatchNorm2d):
-#                 bn_cnt += 1
-#                 # later BN's are frozen
-#                 if not self._enable_pbn or bn_cnt == 1:
-#                     bn.extend(list(m.parameters()))
-#             elif isinstance(m, torch.nn.BatchNorm3d):
-#                 bn_cnt += 1
-#                 # 4
-#                 # later BN's are frozen
-#                 if not self._enable_pbn or bn_cnt == 1:
-#                     bn.extend(list(m.parameters()))
-# #             elif len(m._modules) == 0:
-# #                 if len(list(m.parameters())) > 0:
-# #                     raise ValueError("New atomic module type: {}. Need to give it a learning policy".format(type(m)))
-#         params = self.base_model.parameters()
-#         params = [p for p in params]
-#         other = []
-  
-#         ln = self.base_model.learnable
-#         if ln[0] == 1:
-#             other += [p for p in params if (p.sum() == self.base_model.flow_layer.img_grad.sum()).all() and p.size() == self.base_model.flow_layer.img_grad.size()]
-#             other += [p for p in params if (p.sum() == self.base_model.flow_layer.img_grad2.sum()).all() and p.size() == self.base_model.flow_layer.img_grad2.size()]
-#             params = [p for p in params if (p.sum() != self.base_model.flow_layer.img_grad.sum()).all() or p.size() != self.base_model.flow_layer.img_grad.size()]
-#             params = [p for p in params if (p.sum() != self.base_model.flow_layer.img_grad2.sum()).all() or p.size() != self.base_model.flow_layer.img_grad2.size()]
-#         if ln[1] == 1:
-#             other += [p for p in params if (p.sum() == self.base_model.flow_layer.div.sum()).all() and p.size() == self.base_model.flow_layer.div.size()]
-#             other += [p for p in params if (p.sum() == self.base_model.flow_layer.div2.sum()).all() and p.size() == self.base_model.flow_layer.div2.size()]
-#             params = [p for p in params if (p.sum() != self.base_model.flow_layer.div.sum()).all() or p.size() != self.base_model.flow_layer.div.size()]
-#             params = [p for p in params if (p.sum() != self.base_model.flow_layer.div2.sum()).all() or p.size() != self.base_model.flow_layer.div2.size()]
-#         if ln[2] == 1:
-#             other += [p for p in params if (p.sum() == self.base_model.flow_layer.t.sum()).all() and p.size() == self.base_model.flow_layer.t.size()]
-#             params = [p for p in params if (p.sum() != self.base_model.flow_layer.t.sum()).all() or p.size() != self.base_model.flow_layer.t.size()]
-#         if ln[3] == 1:
-#             other += [p for p in params if (p.sum() == self.base_model.flow_layer.l.sum()).all() and p.size() == self.base_model.flow_layer.l.size()]
-#             params = [p for p in params if (p.sum() != self.base_model.flow_layer.l.sum()).all() or p.size() != self.base_model.flow_layer.l.size()]
-#         if ln[4] == 1:
-#             other += [p for p in params if (p.sum() == self.base_model.flow_layer.a.sum()).all() and p.size() == self.base_model.flow_layer.a.size()]
-#             params = [p for p in params if (p.sum() != self.base_model.flow_layer.a.sum()).all() or p.size() != self.base_model.flow_layer.a.size()]
-        
-#         return [
-# #             {'params': first_3d_conv_weight, 'lr_mult': 5 if self.modality == 'Flow' else 1, 'decay_mult': 1,
-# #              'name': "first_3d_conv_weight"},
-# #             {'params': first_3d_conv_bias, 'lr_mult': 10 if self.modality == 'Flow' else 2, 'decay_mult': 0,
-# #              'name': "first_3d_conv_bias"},
-# #             {'params': first_3d_conv_weight, 'lr_mult': 1 if self.modality == 'Flow' else 1, 'decay_mult': 1,
-# #              'name': "first_3d_conv_weight"},
-#             {'params': first_3d_conv_bias, 'lr_mult': 2 if self.modality == 'Flow' else 1, 'decay_mult': 0,
-#              'name': "first_3d_conv_bias"},                 
-#             {'params': normal_weight, 'lr_mult': 1, 'decay_mult': 1,
-#              'name': "normal_weight"},
-#             {'params': normal_bias, 'lr_mult': 2, 'decay_mult': 0,
-#              'name': "normal_bias"},
-#             {'params': bn, 'lr_mult': 1, 'decay_mult': 0,
-#              'name': "BN scale/shift"},
-#             {'params': flows, 'lr_mult': 1 , 'decay_mult': 0,
-#              'name': "flows"},              
-#             {'params': other, 'lr_mult': 0.01, 'decay_mult': 0,
-#              'name': "Rep Flow weights"},            
-#         ]
 
     def get_optim_policies_BN2to1D(self):
         first_conv_weight = []
@@ -492,7 +339,6 @@ TSN Configurations:
 
         # input.size(): [32, 9, 224, 224]
         # after view() func: [96, 3, 224, 224]
-        # print(input.view((-1, sample_len) + input.size()[-2:]).size())
         if (self.base_model_name == "C3DRes18") :
             before_permute = input.view((-1, sample_len) + input.size()[-2:])
             input_var = torch.transpose(before_permute.view((-1, self.num_segments) + before_permute.size()[1:]), 1, 2)
@@ -501,21 +347,11 @@ TSN Configurations:
             input_var = torch.transpose(before_permute.view((-1, self.num_segments) + before_permute.size()[1:]), 1, 2)            
         elif (self.base_model_name in ["I3D", "I3D_flow"]):    # [B, C, T, W, H]
             before_permute = input.view((-1, sample_len) + input.size()[-2:])
-            input_var = torch.transpose(before_permute.view((-1, self.num_segments) + before_permute.size()[1:]), 1, 2)               
-#             permute = [2,1,0]
-#             input_var = input_var[:,permute,:,:,:]
-#             input_var.permute(0,1,2,4,3)
-#             input_var = input_var[:,::-1,:,:,:]    
+            input_var = torch.transpose(before_permute.view((-1, self.num_segments) + before_permute.size()[1:]), 1, 2)                  
         else:
-            input_var = input.view((-1, sample_len) + input.size()[-2:])
-#             input_var = input_var[:,::-1,:,:,:]              
-#             permute = [2,1,0]
-#             input_var = input_var[:,permute,:,:]            
+            input_var = input.view((-1, sample_len) + input.size()[-2:])        
 
-#         print (input_var.size())
         base_out = self.base_model(input_var, temperature)
-#         base_out = self.base_model(input_var, temperature)
-#         print(base_out.size())
         # zc comments
         if self.dropout > 0:
             base_out = self.new_fc(base_out)
@@ -525,41 +361,12 @@ TSN Configurations:
         # zc comments end
         
         if self.reshape:
-          
-            if self.base_model_name == 'C3DRes18'  :
-                output = base_out
-                output = self.consensus(base_out)
-                return output
-            elif "Res3D" in self.base_model_name:
-                output = base_out
-                output = self.consensus(base_out)
-                return output            
-            elif self.base_model_name == 'ECO':
-                output = base_out
-                output = self.consensus(base_out)
-                return output
-            elif self.base_model_name == 'ECOfull':
-                output = base_out
-                output = self.consensus(base_out)
-                return output
-            elif self.base_model_name in ['I3D', 'I3D_flow']:
-                base_out = base_out.view(base_out.size()[0],-1)
-#                 print (base_out.size())   
-                output = base_out
-#                 output = self.consensus(base_out)
-                return output
+            if "flow" in self.base_model_name:
+                base_out = base_out.view((-1, (self.num_segments)) + base_out.size()[1:])
             else:
-                # base_out.size(): [32, 3, 101], [batch_size, num_segments, num_class] respectively
-                if "flow" in self.base_model_name:
-                    base_out = base_out.view((-1, (self.num_segments)) + base_out.size()[1:])
-#                     print ("segments-1")
-                else:
-                    base_out = base_out.view((-1, (self.num_segments)) + base_out.size()[1:])    
-#                     print ("segments original")                    
-                # output.size(): [32, 1, 101]
-                output = self.consensus(base_out)
-                # output after squeeze(1): [32, 101], forward() returns size: [batch_size, num_class]
-                return output.squeeze(1)
+                base_out = base_out.view((-1, (self.num_segments)) + base_out.size()[1:])                       
+            output = self.consensus(base_out)
+            return output.squeeze(3).squeeze(1)
 
 
     def _get_diff(self, input, keep_rgb=False):

@@ -88,38 +88,7 @@ class TSNDataSet(data.Dataset):
             else:
                 offsets = np.zeros((self.num_segments,))
 #             print (offsets)
-            return offsets + 1        
-        
-#     def _sample_indices(self, record):
-#         """
-
-#         :param record: VideoRecord
-#         :return: list
-#         """
-#         # TSN
-#         if (self.mode):
-#             average_duration = (record.num_frames - self.new_length + 1) // self.num_segments
-        
-#         # consecutive
-#         else:
-#             average_duration = (record.num_frames - self.new_length + 1) - (self.stride* self.num_segments)
-            
-#         if average_duration > 0:
-#             # TSN
-#             if (self.mode):
-#                 offsets = np.multiply(list(range(self.num_segments)), average_duration) + randint(average_duration, size=self.num_segments)
-#             else:
-#             #consecutive
-#                 offsets = np.multiply(list(range(self.num_segments)), self.stride) + np.repeat(randint(average_duration, size=1), self.num_segments)
-
-#             # fixed stride
-# #             offsets = np.multiply(list(range(self.num_segments)), average_duration) + np.repeat(randint(average_duration, size=1), self.num_segments)
-#         elif record.num_frames > self.num_segments:
-#             offsets = np.sort(randint(record.num_frames - self.new_length + 1, size=self.num_segments))
-#         else:
-#             offsets = np.zeros((self.num_segments,))
-#         print(offsets)
-#         return offsets + 1            
+            return offsets + 1                  
 
     def _get_val_indices(self, record):
         if (self.mode==0): # i3d dense sample
@@ -136,29 +105,6 @@ class TSNDataSet(data.Dataset):
                 offsets = np.zeros((self.num_segments,))
             return offsets + 1
 
-#     def _get_val_indices(self, record):       
-#             # TSN 
-#         if (self.mode == 1 and record.num_frames > self.num_segments + self.new_length - 1):     
-#             tick = (record.num_frames - self.new_length + 1) / float(self.num_segments)
-#             offsets = np.array([int(tick / 2.0 + tick * x) for x in range(self.num_segments)])
-
-#             # consecutive
-#         elif (self.mode == 0 and record.num_frames > (self.num_segments*self.stride) + self.new_length - 1): 
-
-#             average_duration = (record.num_frames - self.new_length + 1) - (self.stride* self.num_segments)      
-#             offsets = np.multiply(list(range(self.num_segments)), self.stride) + np.repeat((record.num_frames//2) - (self.num_segments*(self.stride/2)), self.num_segments)
-                        
-# #             offsets = offsets[::-1]
-# #             offsets = np.arange(record.num_frames)            
-#         else:
-#             offsets = np.zeros((self.num_segments,))
-#             quotient = int( (self.num_segments + self.new_length -1) / record.num_frames)
-#             remainder = (self.num_segments + self.new_length -1) % record.num_frames
-#             frames_tick = np.arange(record.num_frames)
-#             offsets = np.concatenate((np.tile(frames_tick, quotient), np.arange(remainder)))
-# #             offsets = np.arange(record.num_frames)
-#         return offsets + 1
-
     def _get_test_indices(self, record):
         if (self.mode==0):
             sample_pos = max(1, 1 + record.num_frames - 64)
@@ -173,47 +119,6 @@ class TSNDataSet(data.Dataset):
             offsets = np.array([int(tick / 2.0 + tick * x) for x in range(self.num_segments)])
             return offsets + 1
 
-
-#     def _get_test_indices(self, record):
-
-# #         tick = (record.num_frames - self.new_length + 1) / float(self.num_segments)
-#         clips = 10
-# #         print(self.mode)
-# #         print(record.num_frames)
-# #         offsets = np.array([int(tick / 2.0 + tick * x) for x in range(self.num_segments)])
-#         if (self.mode == 0 and record.num_frames > (self.num_segments*self.stride) + self.new_length - 1): 
-
-#             average_duration = (record.num_frames - self.new_length + 1) - (self.stride* self.num_segments)
-#             eval_duration = average_duration // (clips -1)
-#             offsets = np.zeros((clips *self.num_segments))
-#             offsets[0:self.num_segments] = np.multiply(list(range(self.num_segments)), self.stride) + np.repeat(eval_duration*0, self.num_segments)
-#             offsets[self.num_segments:2*self.num_segments] = np.multiply(list(range(self.num_segments)), self.stride) + np.repeat(eval_duration*1, self.num_segments)
-#             offsets[2*self.num_segments:3*self.num_segments] = np.multiply(list(range(self.num_segments)), self.stride) + np.repeat(eval_duration*2, self.num_segments)      
-#             offsets[3*self.num_segments:4*self.num_segments] = np.multiply(list(range(self.num_segments)), self.stride) + np.repeat(eval_duration*3, self.num_segments)
-#             offsets[4*self.num_segments:5*self.num_segments] = np.multiply(list(range(self.num_segments)), self.stride) + np.repeat(eval_duration*4, self.num_segments)
-#             offsets[5*self.num_segments:6*self.num_segments] = np.multiply(list(range(self.num_segments)), self.stride) + np.repeat(eval_duration*5, self.num_segments)
-#             offsets[6*self.num_segments:7*self.num_segments] = np.multiply(list(range(self.num_segments)), self.stride) + np.repeat(eval_duration*6, self.num_segments)      
-#             offsets[7*self.num_segments:8*self.num_segments] = np.multiply(list(range(self.num_segments)), self.stride) + np.repeat(eval_duration*7, self.num_segments)
-#             offsets[8*self.num_segments:9*self.num_segments] = np.multiply(list(range(self.num_segments)), self.stride) + np.repeat(eval_duration*8, self.num_segments)
-#             offsets[9*self.num_segments:] = np.multiply(list(range(self.num_segments)), self.stride) + np.repeat(eval_duration*9, self.num_segments)            
-#         else:
-# #             print ("asdfasdf")
-#             offsets = np.zeros((clips *self.num_segments))      
-#             quotient = int( (self.num_segments + self.new_length -1) / record.num_frames)
-#             remainder = (self.num_segments + self.new_length -1) % record.num_frames
-#             frames_tick = np.arange(record.num_frames)
-#             offsets[0:self.num_segments] =np.concatenate((np.tile(frames_tick, quotient), np.arange(remainder)))
-#             offsets[self.num_segments:2*self.num_segments] = np.concatenate((np.tile(frames_tick, quotient), np.arange(remainder)))
-#             offsets[2*self.num_segments:3*self.num_segments] = np.concatenate((np.tile(frames_tick, quotient), np.arange(remainder))) 
-#             offsets[3*self.num_segments:4*self.num_segments] = np.concatenate((np.tile(frames_tick, quotient), np.arange(remainder)))
-#             offsets[4*self.num_segments:5*self.num_segments] = np.concatenate((np.tile(frames_tick, quotient), np.arange(remainder)))
-#             offsets[5*self.num_segments:6*self.num_segments] = np.concatenate((np.tile(frames_tick, quotient), np.arange(remainder)))
-#             offsets[6*self.num_segments:7*self.num_segments] = np.concatenate((np.tile(frames_tick, quotient), np.arange(remainder))) 
-#             offsets[7*self.num_segments:8*self.num_segments] = np.concatenate((np.tile(frames_tick, quotient), np.arange(remainder))) 
-#             offsets[8*self.num_segments:9*self.num_segments] = np.concatenate((np.tile(frames_tick, quotient), np.arange(remainder))) 
-#             offsets[9*self.num_segments:] = np.concatenate((np.tile(frames_tick, quotient), np.arange(remainder)))              
-                                                                                
-#         return offsets + 1
 
     def __getitem__(self, index):
         record = self.video_list[index]

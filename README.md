@@ -1,4 +1,11 @@
 
+# MotionSqueeze: Neural Motion Feature Learning for Video Understanding
+***
+<img src="/img/MS_module.png" width="50%" height="50%" alt="MS_module"></img>
+***
+This is the implementation of the paper "MotionSqueeze: Neural Motion Feature Learning for Video Understanding" by H.Kwon, M.Kim, S.Kwak, and M.Cho.
+For more information, checkout the project [website](http://cvlab.postech.ac.kr/research/MotionSqueeze/) and the paper on [arXiv](https://arxiv.org/abs/2007.09933).
+
 ### Environment:
 * Cuda: 9.0
 * gcc: 5.4.0
@@ -6,55 +13,37 @@
 * PyTorch 1.0.1
 * TorchVison: 0.2.1
 * Spatial Correlation Sampler (https://github.com/ClementPinard/Pytorch-Correlation-extension.git)
+* Others: (https://github.com/arunos728/MotionSqueeze/conda_list.txt)
 
 ### Clone this repo
 
 ```
-git clone https://github.com/arunos728/MS_online_demo.git
+git clone https://github.com/arunos728/MotionSqueeze.git
 ```
 
-### Training
-<!-- 1. Download the initialization and trained models:
+### Running
 
-```Shell
-      sh models/download_models.sh
-```
-
-* If you can not access Google Drive, please download the pretrained models from [BaiduYun](https://pan.baidu.com/s/1Hx52akJLR_ISfX406bkIog), and put them in "models" folder.
--->
-
-Command for running model:
-
+* For training TSM or MSNet on Something-v1, use the following command:
 ```bash
-    ./scripts/run_TSM_Something_v1.sh local
+    ./scripts/train_TSM_Something_v1.sh local
 ```
 
-<!--
-3. For training C3D network use the following command:
-
+* For training TSM or MSNet on Kinetics, use the following command:
 ```bash
-    ./scripts/run_c3dres_kinetics.sh local
+    ./scripts/train_TSM_Kinetics.sh local
 ```
 
-4. For finetuning on UCF101 use the following command:
-
+* For testing your trained model on Something-v1, use the following command:
 ```bash
-    ./scripts/run_ECOLite_finetune_UCF101.sh local
+    ./scripts/test_TSM_Something_v1.sh local
 ```
- -->
-### NOTE
-<!-- * If you want to train your model from scratch change the config as following:
+
+* For testing your trained model on Kinetics, use the following command:
 ```bash
-    --pretrained_parts scratch
+    ./scripts/test_TSM_Kinetics.sh local
 ```
-* configurations explained in "opts.py" -->
 
-#### TODO
-<!-- 1. ECO Full
-2. Trained models on other datasets -->
-
-
-#### Citation
+### Citation
 <!-- If you use this code or ideas from the paper for your research, please cite our paper:
 ```
 @inproceedings{ECO_eccv18,
@@ -68,7 +57,6 @@ year={2018}
 ``` -->
 
 #### Contact
-<!-- 
-  [Mohammadreza Zolfaghari](https://github.com/mzolfaghari/ECO-pytorch), [Can Zhang](https://github.com/zhang-can/ECO-pytorch)
+[Heeseung Kwon](https://github.com/arunos728/MotionSqueeze), [Manjin Kim](https://github.com/arunos728/MotionSqueeze)
 
-  Questions can also be left as issues in the repository. We will be happy to answer them. -->
+Questions can also be left as issues in the repository. We will be happy to answer them.
