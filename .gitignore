@@ -2,3 +2,4 @@
 data/
 net_runs/
 __pycache__
+.gitignore

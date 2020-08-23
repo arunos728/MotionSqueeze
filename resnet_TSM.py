@@ -167,75 +167,68 @@ class matching_layer(nn.Module):
         return corr
     
 class flow_refinement(nn.Module):
-#     expansion = 4    
-    def __init__(self, num_segments, expansion = 1, pos=2, channels=3):
+    def init(self, num_segments, expansion = 1, pos=2):
         super(flow_refinement, self).__init__()
         self.num_segments = num_segments
         self.expansion = expansion
-        self.channels = channels
         self.pos = pos
-        self.bn_a = nn.BatchNorm2d(2)
+        self.out_channel = 64(2(self.pos-1))*self.expansion
+
+        self.c1 = 16
+        self.c2 = 32
+        self.c3 = 64
+
         self.conv1 = nn.Sequential(
-            nn.Conv2d(self.channels, 64, kernel_size=(3,3), stride=(1,1), padding=(1,1), bias=False),
-            nn.BatchNorm2d(64),
-            nn.ReLU()
+        nn.Conv2d(3, 3, kernel_size=7, stride=1, padding=3, groups=3, bias=False),
+        nn.BatchNorm2d(3),
+        nn.ReLU(),
+        nn.Conv2d(3, self.c1, kernel_size=1, stride=1, padding=0, bias=False),
+        nn.BatchNorm2d(self.c1),
+        nn.ReLU()
         )
         self.conv2 = nn.Sequential(
-            nn.Conv2d(64, 64, kernel_size=(3,3), stride=(1,1), padding=(1,1), bias=False),
-            nn.BatchNorm2d(64),
-            nn.ReLU()
-        )       
-        self.conv2_2 = nn.Sequential(
-            nn.Conv2d(16, 64, kernel_size=(3,3), stride=(1,1), padding=(1,1), bias=False),
-            nn.BatchNorm2d(64)
+        nn.Conv2d(self.c1, self.c1, kernel_size=3, stride=1, padding=1, groups=self.c1, bias=False),
+        nn.BatchNorm2d(self.c1),
+        nn.ReLU(),
+        nn.Conv2d(self.c1, self.c2, kernel_size=1, stride=1, padding=0, bias=False),
+        nn.BatchNorm2d(self.c2),
+        nn.ReLU()
         )
-        self.conv_tsm = nn.Sequential(
-            nn.Conv2d(64, 64, kernel_size=(3,3), stride=(1,1), padding=(1,1), bias=False),
-            nn.BatchNorm2d(64),
-            nn.ReLU()
-        )          
         self.conv3 = nn.Sequential(
-            nn.Conv2d(64, 128*self.expansion, kernel_size=(3,3), stride=1, padding=1, bias=False),
-            nn.BatchNorm2d(128*self.expansion)
-        )    
-        self.conv3_2 = nn.Sequential(
-            nn.Conv2d(64, 256*self.expansion, kernel_size=(3,3), stride=(1,1), padding=(1,1), bias=False),
-            nn.BatchNorm2d(256*self.expansion)
-        )            
-        self.relu = nn.ReLU(inplace=True)    
+        nn.Conv2d(self.c2, self.c2, kernel_size=3, stride=1, padding=1, groups=self.c2, bias=False),
+        nn.BatchNorm2d(self.c2),
+        nn.ReLU(),
+        nn.Conv2d(self.c2, self.c3, kernel_size=1, stride=1, padding=0, bias=False),
+        nn.BatchNorm2d(self.c3),
+        nn.ReLU()
+        )
+        self.conv4 = nn.Sequential(
+        nn.Conv2d(self.c3, self.c3, kernel_size=3, stride=1, padding=1, groups=self.c3, bias=False),
+        nn.BatchNorm2d(self.c3),
+        nn.ReLU(),
+        nn.Conv2d(self.c3, self.out_channel, kernel_size=1, stride=1, padding=0, bias=False),
+        nn.BatchNorm2d(self.out_channel),
+        nn.ReLU()
+        )
 
-        
+        self.relu = nn.ReLU(inplace=True)
+
     def forward(self, x, res, match_v):
-        _, c1, h1, w1 = res.size()
-        x = tr.cat([x, match_v], dim=1)
-        _, c, h, w = x.size()       
-        _, c2, h, w = match_v.size()
-        x = x.view(-1,self.num_segments-1,c,h,w) ## (b,t-1, 2, h,w) .permute(0,2,1,3,4).contiguous()  ## (b,2,t-1,h,w)                        
-        size = x.size()
-        zero_pad = tr.zeros(size[0],1,c,h,w).to('cuda')          
-        x = tr.cat([x,zero_pad], dim=1)   ## (b,t,2,h,w)
-        x = x.view(-1,c,h,w)
-#         x = x.permute(0,2,1,3,4).contiguous()        
-        
-            
-        
-        x = self.conv1(x)
-        if (self.pos==1):
-            x = self.conv2_2(x)
-        else:
-#             x_2 = self.conv2_temp(x)            
-            x = self.conv2(x)
-        if (self.pos==2):
-#             x = tsm(x, self.num_segments, 'zero')
-#             x = self.conv_tsm(x)
-            x = self.conv3(x)
-#             x_2 = self.conv3_temp(x_2)
-        elif(self.pos==3):
-            x = self.conv3_2(x)
+        if match_v is not None:
+            x = tr.cat([x, match_v], dim=1)
+        _, c, h, w = x.size()
+        x = x.view(-1,self.num_segments-1,c,h,w)
 
+        x = tr.cat([x,x[:,-1:,:,:,:]], dim=1) ## (b,t,3,h,w)
+        x = x.view(-1,c,h,w)
+
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
+        x = self.conv4(x)
         x = x + res
-        x = self.relu(x)
-        return x  
+
+        return x
     
 class ResNet(nn.Module):
 
