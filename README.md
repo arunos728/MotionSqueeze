@@ -1,7 +1,7 @@
 
 # MotionSqueeze: Neural Motion Feature Learning for Video Understanding
 ***
-<img src="/img/MS_module.png" width="50%" height="50%" alt="MS_module"></img>
+<img src="/img/MS_module.png" width="100%" height="100%" alt="MS_module"></img>
 ***
 This is the implementation of the paper "MotionSqueeze: Neural Motion Feature Learning for Video Understanding" by H.Kwon, M.Kim, S.Kwak, and M.Cho.
 For more information, checkout the project [website](http://cvlab.postech.ac.kr/research/MotionSqueeze/) and the paper on [arXiv](https://arxiv.org/abs/2007.09933).
@@ -13,7 +13,7 @@ For more information, checkout the project [website](http://cvlab.postech.ac.kr/
 * PyTorch 1.0.1
 * TorchVison: 0.2.1
 * Spatial Correlation Sampler (https://github.com/ClementPinard/Pytorch-Correlation-extension.git)
-* Others: (https://github.com/arunos728/MotionSqueeze/conda_list.txt)
+* Others: [conda_list](https://github.com/arunos728/MotionSqueeze/blob/masterconda_list.txt)
 
 ### Clone this repo
 
@@ -56,7 +56,7 @@ year={2018}
 }
 ``` -->
 
-#### Contact
+### Contact
 [Heeseung Kwon](https://github.com/arunos728/MotionSqueeze), [Manjin Kim](https://github.com/arunos728/MotionSqueeze)
 
 Questions can also be left as issues in the repository. We will be happy to answer them.
