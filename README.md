@@ -13,7 +13,7 @@ For more information, checkout the project [website](http://cvlab.postech.ac.kr/
 * PyTorch 1.0.1
 * TorchVison: 0.2.1
 * Spatial Correlation Sampler (https://github.com/ClementPinard/Pytorch-Correlation-extension.git)
-* Others: [conda_list](https://github.com/arunos728/MotionSqueeze/blob/masterconda_list.txt)
+* Others: [conda_list](https://github.com/arunos728/MotionSqueeze/blob/master/conda_list.txt)
 
 ### Clone this repo
 
@@ -57,6 +57,6 @@ year={2018}
 ``` -->
 
 ### Contact
-[Heeseung Kwon](https://github.com/arunos728/MotionSqueeze), [Manjin Kim](https://github.com/arunos728/MotionSqueeze)
+[Heeseung Kwon](https://aruno@postech.ac.kr), [Manjin Kim](https://mandos@postech.ac.kr)
 
 Questions can also be left as issues in the repository. We will be happy to answer them.
