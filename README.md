@@ -57,6 +57,6 @@ year={2018}
 ``` -->
 
 ### Contact
-[Heeseung Kwon](aruno@postech.ac.kr), [Manjin Kim](mandos@postech.ac.kr)
+Heeseung Kwon(https://aruno@postech.ac.kr), Manjin Kim(https://mandos@postech.ac.kr)
 
 Questions can also be left as issues in the repository. We will be happy to answer them.
