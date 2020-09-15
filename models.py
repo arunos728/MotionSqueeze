@@ -456,8 +456,7 @@ TSN Configurations:
 
     def get_augmentation(self):
         if self.modality == 'RGB':
-            return torchvision.transforms.Compose([GroupMultiScaleCrop(self.input_size, [1, .875, .75, .66]),
-                                                   GroupRandomHorizontalFlip(is_flow=False)])
+            return torchvision.transforms.Compose([GroupMultiScaleCrop(self.input_size, [1, .875, .75, .66]),GroupRandomHorizontalFlip(selective_flip=True, is_flow=False)])
 #             return torchvision.transforms.Compose([GroupMultiScaleCrop(self.input_size, [1, .875]),
 #                                                    GroupRandomHorizontalFlip(is_flow=False)])        
         elif self.modality == 'Flow':

@@ -167,7 +167,7 @@ class Matching_layer(nn.Module):
         return corr
     
 class Flow_refinement(nn.Module):
-    def init(self, num_segments, expansion = 1, pos=2):
+    def __init__(self, num_segments, expansion = 1, pos=2):
         super(Flow_refinement, self).__init__()
         self.num_segments = num_segments
         self.expansion = expansion
