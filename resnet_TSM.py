@@ -142,9 +142,9 @@ class Bottleneck(nn.Module):
 
         return out
 
-class matching_layer(nn.Module):
+class Matching_layer(nn.Module):
     def __init__(self, ks, patch, stride, pad, patch_dilation):
-        super(matching_layer, self).__init__()
+        super(Matching_layer, self).__init__()
         self.relu = nn.ReLU()
         self.patch = patch
         self.correlation_sampler = SpatialCorrelationSampler(ks, patch, stride, pad, patch_dilation)
@@ -166,13 +166,13 @@ class matching_layer(nn.Module):
         corr = self.relu(corr)
         return corr
     
-class flow_refinement(nn.Module):
+class Flow_refinement(nn.Module):
     def init(self, num_segments, expansion = 1, pos=2):
-        super(flow_refinement, self).__init__()
+        super(Flow_refinement, self).__init__()
         self.num_segments = num_segments
         self.expansion = expansion
         self.pos = pos
-        self.out_channel = 64(2(self.pos-1))*self.expansion
+        self.out_channel = 64*(2**(self.pos-1))*self.expansion
 
         self.c1 = 16
         self.c2 = 32
@@ -247,11 +247,11 @@ class ResNet(nn.Module):
         self.flow_estimation = flow_estimation
                                                                    
       
-        ## MatchFlow
+        ## MotionSqueeze
         self.patch= 15
         self.patch_dilation =1
-        self.matching_layer = matching_layer(ks=1, patch=self.patch, stride=1, pad=0, patch_dilation=self.patch_dilation)                              
-        self.flow_refinement = flow_refinement(num_segments=num_segments, expansion=block.expansion, channels=3)       
+        self.matching_layer = Matching_layer(ks=1, patch=self.patch, stride=1, pad=0, patch_dilation=self.patch_dilation)                              
+        self.flow_refinement = Flow_refinement(num_segments=num_segments, expansion=block.expansion,pos=2)      
         self.soft_argmax = nn.Softmax(dim=1)
              
        
