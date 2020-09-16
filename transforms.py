@@ -43,25 +43,6 @@ class GroupCenterCrop(object):
         img_group, label = img_tuple
         return ([self.worker(img) for img in img_group], label)
 
-
-class GroupRandomHorizontalFlip(object):
-    """Randomly horizontally flips the given PIL.Image with a probability of 0.5
-    """
-    def __init__(self, is_flow=False):
-        self.is_flow = is_flow
-
-    def __call__(self, img_tuple, is_flow=False):
-        img_group, label = img_tuple
-        v = random.random()
-        if v < 0.5:
-            ret = [img.transpose(Image.FLIP_LEFT_RIGHT) for img in img_group]
-            if self.is_flow:
-                for i in range(0, len(ret), 2):
-                    ret[i] = ImageOps.invert(ret[i])  # invert flow pixel values when flipping
-            return (ret, label)
-        else:
-            return img_tuple
-
         
 class GroupRandomHorizontalFlip(object):
     """Randomly horizontally flips the given PIL.Image with a probability of 0.5
