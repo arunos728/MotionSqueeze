@@ -229,6 +229,7 @@ class Flow_refinement(nn.Module):
         x = x + res
 
         return x
+
     
 class ResNet(nn.Module):
 
@@ -248,12 +249,18 @@ class ResNet(nn.Module):
                                                                    
       
         ## MotionSqueeze
-        self.patch= 15
-        self.patch_dilation =1
-        self.matching_layer = Matching_layer(ks=1, patch=self.patch, stride=1, pad=0, patch_dilation=self.patch_dilation)                              
-        self.flow_refinement = Flow_refinement(num_segments=num_segments, expansion=block.expansion,pos=2)      
-        self.soft_argmax = nn.Softmax(dim=1)
-             
+        if flow_estimation:
+            self.patch= 15
+            self.patch_dilation =1
+            self.matching_layer = Matching_layer(ks=1, patch=self.patch, stride=1, pad=0, patch_dilation=self.patch_dilation)                              
+            self.flow_refinement = Flow_refinement(num_segments=num_segments, expansion=block.expansion,pos=2)      
+            self.soft_argmax = nn.Softmax(dim=1)
+        
+            self.chnl_reduction = nn.Sequential(
+                nn.Conv2d(128*block.expansion, 64, kernel_size=1, stride=1, padding=0, bias=False),
+                nn.BatchNorm2d(64),
+                nn.ReLU(inplace=True)
+            )
        
         self.layer1 = self._make_layer(block, 64, layers[0], num_segments=num_segments)
         self.layer2 = self._make_layer(block, 128, layers[1],  num_segments=num_segments, stride=2)
@@ -387,7 +394,9 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)            
     
     def flow_computation(self, x, pos=2, temperature=100):
-
+        
+        x = self.chnl_reduction(x)
+        
         size = x.size()               
         x = x.view((-1, self.num_segments) + size[1:])        # N T C H W
         x = x.permute(0,2,1,3,4).contiguous() # B C T H W   
