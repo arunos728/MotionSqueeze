@@ -41,14 +41,6 @@ parser.add_argument('--clip-gradient', '--gd', default=None, type=float,
 parser.add_argument('--no_partialbn', '--npb', default=False, action="store_true")
 parser.add_argument('--nesterov',  default=False)
 
-# ========================= Multi-grid Configs ==========================
-parser.add_argument('--num_long_cycles', default=0, type=int,
-                    help='number of long cycle grid')
-parser.add_argument('--num_short_cycles', default=0, type=int,
-                    help='number of short cycle grid')
-parser.add_argument('--last_cycle_tune', default=False, action='store_true', 
-                    help='different meaning from the papar. NO MULTIGRID at FINETUNE stage.')
-
 # ========================= Monitor Configs ==========================
 parser.add_argument('--print-freq', '-p', default=20, type=int,
                     metavar='N', help='print frequency (default: 10)')
