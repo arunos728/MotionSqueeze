@@ -44,17 +44,15 @@ git clone https://github.com/arunos728/MotionSqueeze.git
 ```
 
 ### Citation
-<!-- If you use this code or ideas from the paper for your research, please cite our paper:
+If you use this code or ideas from the paper for your research, please cite our paper:
 ```
-@inproceedings{ECO_eccv18,
-author={Mohammadreza Zolfaghari and
-               Kamaljeet Singh and
-               Thomas Brox},
-title={{ECO:} Efficient Convolutional Network for Online Video Understanding},	       
+@inproceedings{kwon2020motionsqueeze,
+title={MotionSqueeze: Neural Motion Feature Learning for Video Understanding},	  
+author={Heeseung Kwon and Manjin Kim and Suha Kwak and Minsu Cho},     
 booktitle={ECCV},
-year={2018}
+year={2020}
 }
-``` -->
+```
 
 ### Contact
 Heeseung Kwon(https://aruno@postech.ac.kr), Manjin Kim(https://mandos@postech.ac.kr)

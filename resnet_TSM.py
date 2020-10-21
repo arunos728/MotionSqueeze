@@ -166,7 +166,6 @@ class Matching_layer(nn.Module):
         corr = self.relu(corr)
         return corr
     
-<<<<<<< Updated upstream
 class Flow_refinement(nn.Module):
     def __init__(self, num_segments, expansion = 1, pos=2):
         super(Flow_refinement, self).__init__()
@@ -174,15 +173,6 @@ class Flow_refinement(nn.Module):
         self.expansion = expansion
         self.pos = pos
         self.out_channel = 64*(2**(self.pos-1))*self.expansion
-=======
-class flow_refinement(nn.Module):
-    def init(self, num_segments, expansion = 1):
-        super(flow_refinement, self).__init__()
-        self.num_segments = num_segments
-        self.expansion = expansion
-        self.out_channel =128*self.expansion
->>>>>>> Stashed changes
-
         self.c1 = 16
         self.c2 = 32
         self.c3 = 64
@@ -255,9 +245,7 @@ class ResNet(nn.Module):
         self.softmax = nn.Softmax(dim=1)        
         self.num_segments = num_segments     
         self.flow_estimation = flow_estimation
-                                                                   
-      
-<<<<<<< Updated upstream
+
         ## MotionSqueeze
         if flow_estimation:
             self.patch= 15
@@ -271,15 +259,6 @@ class ResNet(nn.Module):
                 nn.BatchNorm2d(64),
                 nn.ReLU(inplace=True)
             )
-=======
-        ## MatchFlow
-        self.patch= 15
-        self.patch_dilation =1
-        self.matching_layer = matching_layer(ks=1, patch=self.patch, stride=1, pad=0, patch_dilation=self.patch_dilation)                              
-        self.flow_refinement = flow_refinement(num_segments=num_segments, expansion=block.expansion)       
-        self.soft_argmax = nn.Softmax(dim=1)
-             
->>>>>>> Stashed changes
        
         self.layer1 = self._make_layer(block, 64, layers[0], num_segments=num_segments)
         self.layer2 = self._make_layer(block, 128, layers[1],  num_segments=num_segments, stride=2)
