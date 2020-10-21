@@ -166,6 +166,7 @@ class Matching_layer(nn.Module):
         corr = self.relu(corr)
         return corr
     
+<<<<<<< Updated upstream
 class Flow_refinement(nn.Module):
     def __init__(self, num_segments, expansion = 1, pos=2):
         super(Flow_refinement, self).__init__()
@@ -173,6 +174,14 @@ class Flow_refinement(nn.Module):
         self.expansion = expansion
         self.pos = pos
         self.out_channel = 64*(2**(self.pos-1))*self.expansion
+=======
+class flow_refinement(nn.Module):
+    def init(self, num_segments, expansion = 1):
+        super(flow_refinement, self).__init__()
+        self.num_segments = num_segments
+        self.expansion = expansion
+        self.out_channel =128*self.expansion
+>>>>>>> Stashed changes
 
         self.c1 = 16
         self.c2 = 32
@@ -248,6 +257,7 @@ class ResNet(nn.Module):
         self.flow_estimation = flow_estimation
                                                                    
       
+<<<<<<< Updated upstream
         ## MotionSqueeze
         if flow_estimation:
             self.patch= 15
@@ -261,6 +271,15 @@ class ResNet(nn.Module):
                 nn.BatchNorm2d(64),
                 nn.ReLU(inplace=True)
             )
+=======
+        ## MatchFlow
+        self.patch= 15
+        self.patch_dilation =1
+        self.matching_layer = matching_layer(ks=1, patch=self.patch, stride=1, pad=0, patch_dilation=self.patch_dilation)                              
+        self.flow_refinement = flow_refinement(num_segments=num_segments, expansion=block.expansion)       
+        self.soft_argmax = nn.Softmax(dim=1)
+             
+>>>>>>> Stashed changes
        
         self.layer1 = self._make_layer(block, 64, layers[0], num_segments=num_segments)
         self.layer2 = self._make_layer(block, 128, layers[1],  num_segments=num_segments, stride=2)
@@ -364,12 +383,7 @@ class ResNet(nn.Module):
         smax_x = smax.sum(dim=1, keepdim=False) #(b,w=k,h,w)
         smax_y = smax.sum(dim=2, keepdim=False) #(b,h=k,h,w)
         flow_x = (smax_x*x_mult).sum(dim=1, keepdim=True).view(-1,1,h*w) # (b,1,h,w)
-        flow_y = (smax_y*y_mult).sum(dim=1, keepdim=True).view(-1,1,h*w) # (b,1,h,w)
-        
-#         grid_x = tr.clamp(soft_idx_x + flow_x,0,w-1)
-#         grid_y = tr.clamp(soft_idx_y + flow_y,0,h-1)            
-#         grid_x = 2*(grid_x / (w-1)) - 1 #(b,1,h*w)
-#         grid_y = 2*(grid_y / (h-1)) - 1 #(b,1,h*w)
+        flow_y = (smax_y*y_mult).sum(dim=1, keepdim=True).view(-1,1,h*w) # (b,1,h,w)    
 
         flow_x = (flow_x / (self.patch_dilation * displacement))
         flow_y = (flow_y / (self.patch_dilation * displacement))
@@ -434,7 +448,7 @@ class ResNet(nn.Module):
         
         # Flow
         if (self.flow_estimation == 1):  
-            flow_1, match_v = self.flow_computation(x, temperature=temperature, pos=2)
+            flow_1, match_v = self.flow_computation(x, temperature=temperature)
             x = self.flow_refinement(flow_1,x, match_v)
 
         x = self.layer3(x)                           
