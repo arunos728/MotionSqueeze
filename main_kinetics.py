@@ -19,7 +19,7 @@ import math
 import torch.utils.model_zoo as model_zoo
 from torch.nn.init import constant_, xavier_uniform_
 
-# os.environ["CUDA_VISIBLE_DEVICES"]='4,5,6,7'
+os.environ["CUDA_VISIBLE_DEVICES"]='0,1,2,3'
 
 best_prec1 = 0
 
@@ -56,6 +56,9 @@ def main():
     elif args.dataset == 'tinykinetics':
         num_class = 150
         rgb_read_format = "{:05d}.jpg"        
+    elif args.dataset == 'minikinetics':
+        num_class = 150
+        rgb_read_format = "{:05d}.jpg"          
     else:
         raise ValueError('Unknown dataset '+args.dataset)
 

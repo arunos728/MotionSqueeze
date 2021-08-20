@@ -251,11 +251,11 @@ class ResNet(nn.Module):
             self.patch= 15
             self.patch_dilation =1
             self.matching_layer = Matching_layer(ks=1, patch=self.patch, stride=1, pad=0, patch_dilation=self.patch_dilation)                              
-            self.flow_refinement = Flow_refinement(num_segments=num_segments, expansion=block.expansion,pos=2)      
+            self.flow_refinement = Flow_refinement(num_segments=num_segments, expansion=block.expansion,pos=3)      
             self.soft_argmax = nn.Softmax(dim=1)
         
             self.chnl_reduction = nn.Sequential(
-                nn.Conv2d(128*block.expansion, 64, kernel_size=1, stride=1, padding=0, bias=False),
+                nn.Conv2d(256*block.expansion, 64, kernel_size=1, stride=1, padding=0, bias=False),
                 nn.BatchNorm2d(64),
                 nn.ReLU(inplace=True)
             )
@@ -422,7 +422,7 @@ class ResNet(nn.Module):
         x = self.relu(x)
         x = self.maxpool(x)
        
-        x = self.layer1(x)                             
+        x = self.layer1(x)                                                 
         x = self.layer2(x)          
         
         # Flow
@@ -430,7 +430,7 @@ class ResNet(nn.Module):
             flow_1, match_v = self.flow_computation(x, temperature=temperature)
             x = self.flow_refinement(flow_1,x, match_v)
 
-        x = self.layer3(x)                           
+        x = self.layer3(x)                                    
         x = self.layer4(x)
         x = self.avgpool(x)    
         x = x.view(x.size(0), -1,1)    
