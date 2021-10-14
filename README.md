@@ -29,6 +29,18 @@ conda env create -f environment.yml
 conda activate MS
 ```
 
+### Installing Correlation sampler
+
+```
+cd Pytorch-Correlation-extension
+python setup.py install
+
+# check whether SpatialCorrelationSampler is installed correctly.
+python check.py forward
+python check.py backward
+python checkCorrelationSampler.py
+```
+Please check this [repo](https://github.com/ClementPinard/Pytorch-Correlation-extension) for the detailed instructions.
 
 ### Running
 
