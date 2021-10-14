@@ -3,3 +3,5 @@ data/
 net_runs/
 __pycache__
 .gitignore
+conda_lists_old.txt
+Pytorch-Correlation-extension/

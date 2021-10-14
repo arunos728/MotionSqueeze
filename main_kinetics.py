@@ -18,8 +18,7 @@ import sys
 import math
 import torch.utils.model_zoo as model_zoo
 from torch.nn.init import constant_, xavier_uniform_
-
-os.environ["CUDA_VISIBLE_DEVICES"]='0,1,2,3'
+# os.environ["CUDA_VISIBLE_DEVICES"]='0,1,2,3'
 
 best_prec1 = 0
 

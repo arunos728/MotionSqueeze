@@ -142,9 +142,9 @@ class Bottleneck(nn.Module):
 
         return out
 
-class Matching_layer(nn.Module):
+class Matching_layer_scs(nn.Module):
     def __init__(self, ks, patch, stride, pad, patch_dilation):
-        super(Matching_layer, self).__init__()
+        super(Matching_layer_scs, self).__init__()
         self.relu = nn.ReLU()
         self.patch = patch
         self.correlation_sampler = SpatialCorrelationSampler(ks, patch, stride, pad, patch_dilation)
@@ -163,6 +163,62 @@ class Matching_layer(nn.Module):
         b, c, h2, w2 = feature2.size()
         corr = self.correlation_sampler(feature1, feature2)
         corr = corr.view(b, self.patch * self.patch, h1* w1) # Channel : target // Spatial grid : source
+        corr = self.relu(corr)
+        return corr
+    
+class Matching_layer_mm(nn.Module):
+    def __init__(self, patch):
+        super(Matching_layer_mm, self).__init__()
+        self.relu = nn.ReLU()
+        self.patch = patch
+    def L2normalize(self, x, d=1):
+        eps = 1e-6
+        norm = x ** 2
+        norm = norm.sum(dim=d, keepdim=True) + eps
+        norm = norm ** (0.5)
+        return (x / norm)
+    def corr_abs_to_rel(self,corr,h,w):
+        max_d = self.patch // 2
+        b,c,s = corr.size()        
+        corr = corr.view(b,h,w,h,w)
+        w_diag = tr.zeros((b,h,h,self.patch ,w),device='cuda')
+        for i in range(max_d+1):
+            if (i==0):
+                w_corr_offset = tr.diagonal(corr,offset=0,dim1=2,dim2=4)       
+                w_diag[:,:,:,max_d] = w_corr_offset
+            else:
+                w_corr_offset_pos = tr.diagonal(corr,offset=i,dim1=2,dim2=4) 
+                w_corr_offset_pos = F.pad(w_corr_offset_pos, (i,0)) #.unsqueeze(5)
+                w_diag[:,:,:,max_d-i] = w_corr_offset_pos
+                w_corr_offset_neg = tr.diagonal(corr,offset=-i,dim1=2,dim2=4) 
+                w_corr_offset_neg = F.pad(w_corr_offset_neg, (0,i)) #.unsqueeze(5)
+                w_diag[:,:,:,max_d+i] = w_corr_offset_neg
+        hw_diag = tr.zeros((b,self.patch ,w,self.patch ,h),device='cuda') 
+        for i in range(max_d+1):
+            if (i==0):
+                h_corr_offset = tr.diagonal(w_diag,offset=0,dim1=1,dim2=2)
+                hw_diag[:,:,:,max_d] = h_corr_offset
+            else:
+                h_corr_offset_pos = tr.diagonal(w_diag,offset=i,dim1=1,dim2=2) 
+                h_corr_offset_pos = F.pad(h_corr_offset_pos, (i,0)) #.unsqueeze(5)
+                hw_diag[:,:,:,max_d-i] = h_corr_offset_pos
+                h_corr_offset_neg = tr.diagonal(w_diag,offset=-i,dim1=1,dim2=2) 
+                h_corr_offset_neg = F.pad(h_corr_offset_neg, (0,i)) #.unsqueeze(5)      
+                hw_diag[:,:,:,max_d+i] = h_corr_offset_neg                
+        hw_diag = hw_diag.permute(0,3,1,4,2).contiguous()
+        hw_diag = hw_diag.view(-1,self.patch *self.patch ,h*w)      
+        return hw_diag    
+
+    def forward(self, feature1, feature2):
+        feature1 = self.L2normalize(feature1)
+        feature2 = self.L2normalize(feature2)
+        b, c, h1, w1 = feature1.size()
+        b, c, h2, w2 = feature2.size()
+        feature1 = feature1.view(b, c, h1 * w1)
+        feature2 = feature2.view(b, c, h2 * w2)
+        corr = tr.bmm(feature2.transpose(1, 2), feature1)
+        corr = corr.view(b, h2 * w2, h1 * w1) # Channel : target // Spatial grid : source
+        corr = self.corr_abs_to_rel(corr,h1,w1) # (b,pp,hw)
         corr = self.relu(corr)
         return corr
     
@@ -250,12 +306,14 @@ class ResNet(nn.Module):
         if flow_estimation:
             self.patch= 15
             self.patch_dilation =1
-            self.matching_layer = Matching_layer(ks=1, patch=self.patch, stride=1, pad=0, patch_dilation=self.patch_dilation)                              
-            self.flow_refinement = Flow_refinement(num_segments=num_segments, expansion=block.expansion,pos=3)      
+            self.matching_layer = Matching_layer_scs(ks=1, patch=self.patch, stride=1, pad=0, patch_dilation=self.patch_dilation)
+#             self.matching_layer = Matching_layer_mm(patch=self.patch)
+            
+            self.flow_refinement = Flow_refinement(num_segments=num_segments, expansion=block.expansion,pos=2)      
             self.soft_argmax = nn.Softmax(dim=1)
         
             self.chnl_reduction = nn.Sequential(
-                nn.Conv2d(256*block.expansion, 64, kernel_size=1, stride=1, padding=0, bias=False),
+                nn.Conv2d(128*block.expansion, 64, kernel_size=1, stride=1, padding=0, bias=False),
                 nn.BatchNorm2d(64),
                 nn.ReLU(inplace=True)
             )

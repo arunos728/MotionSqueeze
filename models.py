@@ -46,9 +46,9 @@ TSN Configurations:
         if (base_model == 'TSM'):
 #             from resnet_TSM import resnet18
 #             from resnet_TSM import resnet34      
-            from resnet_TSM import resnet18
+            from resnet_TSM import resnet50
 #             self.base_model = resnet50(True)            
-            self.base_model = resnet18(True, shift='TSM', num_segments = num_segments)
+            self.base_model = resnet50(True, shift='TSM', num_segments = num_segments)
             self.base_model.last_layer_name = 'fc1'
             self.input_size = 224
             self.input_mean = [0.485, 0.456, 0.406]

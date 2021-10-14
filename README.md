@@ -8,18 +8,27 @@ For more information, checkout the project [website](http://cvlab.postech.ac.kr/
 
 ### Environment:
 * Cuda: 9.0
-* gcc: 5.4.0
+* gcc: 7.3.0
 * Python 3.6.8
 * PyTorch 1.0.1
-* TorchVison: 0.2.1
+* TorchVison: 0.2.2
 * Spatial Correlation Sampler (https://github.com/ClementPinard/Pytorch-Correlation-extension.git)
-* Others: [conda_list](https://github.com/arunos728/MotionSqueeze/blob/master/conda_list.txt)
+* Others: [environment](https://github.com/arunos728/MotionSqueeze/blob/master/environment.yml)
 
 ### Clone this repo
 
 ```
 git clone https://github.com/arunos728/MotionSqueeze.git
 ```
+
+### Anaconda environment setting
+
+```
+cd MotionSqueeze
+conda env create -f environment.yml
+conda activate MS
+```
+
 
 ### Running
 
